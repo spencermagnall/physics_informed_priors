@@ -3,7 +3,7 @@ from bilby.core.prior import ConditionalLogUniform, LogUniform, TruncatedGaussia
 from bilby.core.prior import PriorDict, Uniform, Constraint,ConditionalInterped,ConditionalPriorDict,Cosine,Sine
 import bilby.gw.prior
 import numpy as np 
-from BNSPriorDict_ChirpMassLambda import BNSPriorDict_chirpmass_lambda_tilde
+from BNSPriorDict_ChirpMassLambda import BNSPriorDict_chirpmass_lambda_tilde, convert_to_lal_binary_neutron_star_parameters_mchirp
 
 # Setup injection for now 
 # Specify the output directory and the name of the simulation.
@@ -59,7 +59,7 @@ for key in [
     "chi_1",
     "chi_2",
     "theta_jn",
-    "luminosity_distance",
+    #"luminosity_distance",
     "phase",
 ]:
     priors_gw[key] = injection_parameters[key]
@@ -84,7 +84,9 @@ waveform_generator = bilby.gw.WaveformGenerator(
     duration=duration,
     sampling_frequency=sampling_frequency,
     frequency_domain_source_model=bilby.gw.source.lal_binary_neutron_star,
-    parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_neutron_star_parameters,
+    #parameter_conversion=bilby.gw.conversion.convert_to_lal_binary_neutron_star_parameters,
+    #parameter_conversion=BNSPriorDict_chirpmass_lambda_tilde.default_conversion_function,
+    parameter_conversion=convert_to_lal_binary_neutron_star_parameters_mchirp,
     waveform_arguments=waveform_arguments,
 )
 
@@ -115,17 +117,19 @@ priors_gw = dict(priors_gw)
 result = bilby.run_sampler(
     likelihood=likelihood,
     priors=priors_gw,
-    sampler="nestle",
-    nlive=10,
-    #sampler="emcee",
-    #nwalkers=10,
-    #nsteps=100,
+    #sampler="nestle",
+    #nlive=10,
+    sampler="emcee",
+    nwalkers=10,
+    nsteps=4000,
     #clean=True,
     resume=True,
     injection_parameters=injection_parameters,
     outdir=outdir,
     label=label,
+    npool=8,
     #conversion_function=bilby.gw.conversion.generate_all_bns_parameters,
+    #conversion_function=BNSPriorDict_chirpmass_lambda_tilde.default_conversion_function,
 )
 
 result.plot_corner()
