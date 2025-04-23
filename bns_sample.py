@@ -20,8 +20,8 @@ np.random.seed(88170235)
 # parameters, including masses of the two black holes (mass_1, mass_2),
 # aligned spins of both black holes (chi_1, chi_2), etc.
 injection_parameters = dict(
-    mass_1=1.5,
-    mass_2=1.3,
+    mass_1_source=1.5,
+    mass_2_source=1.3,
     chi_1=0.02,
     chi_2=0.02,
     luminosity_distance=250.0,
@@ -37,16 +37,19 @@ injection_parameters = dict(
 
 # We setup the prior dict using the interpolated prior from the file
 priors_gw = BNSPriorDict_chirpmass_lambda_tilde(MCL_filename='/Users/smag0001/McLambda_prior/MCL_BNS_new.dat')
+# Delta lambda tilde is defined with a uniform prior
+priors_gw['delta_lambda_tilde'] = Uniform(name='delta_lambda_tilde', minimum=-5000, maximum=5000, boundary=None)
 # Define the other priors for inference 
-priors_gw['luminosity_distance'] = bilby.gw.prior.UniformSourceFrame(name='luminosity_distance', minimum=1e2, maximum=5e3)
-priors_gw['dec'] = Cosine(name='dec')
-priors_gw['ra'] = Uniform(name='ra', minimum=0, maximum=2 * np.pi, boundary='periodic')
-priors_gw['theta_jn'] = Sine(name='theta_jn')
-priors_gw['psi'] = Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic')
-priors_gw['phase'] = Uniform(name='phase', minimum=0, maximum=2 * np.pi, boundary='periodic')
-priors_gw['chi_1'] = bilby.gw.prior.AlignedSpin(name='chi_1', a_prior=Uniform(minimum=0, maximum=0.99))
-priors_gw['chi_2'] = bilby.gw.prior.AlignedSpin(name='chi_2', a_prior=Uniform(minimum=0, maximum=0.99))
-priors_gw['mass_ratio'] = bilby.gw.prior.UniformInComponentsMassRatio(name='mass_ratio', minimum=0.125, maximum=1)
+priors_gw['luminosity_distance'] = 250.0 #bilby.gw.prior.UniformSourceFrame(name='luminosity_distance', minimum=1e2, maximum=5e3)
+# Fix everything to injected values other than Mchirp and lambda_tilde
+priors_gw['dec'] = - 1.2108 #Cosine(name='dec')
+priors_gw['ra'] = 1.375 #Uniform(name='ra', minimum=0, maximum=2 * np.pi, boundary='periodic')
+priors_gw['theta_jn'] = 0.4 #Sine(name='theta_jn')
+priors_gw['psi'] =  2.659 #Uniform(name='psi', minimum=0, maximum=np.pi, boundary='periodic')
+priors_gw['phase'] = 1.3 #Uniform(name='phase', minimum=0, maximum=2 * np.pi, boundary='periodic')
+priors_gw['chi_1'] = 0.02 #bilby.gw.prior.AlignedSpin(name='chi_1', a_prior=Uniform(minimum=0, maximum=0.99))
+priors_gw['chi_2'] = 0#bilby.gw.prior.AlignedSpin(name='chi_2', a_prior=Uniform(minimum=0, maximum=0.99))
+priors_gw['mass_ratio'] =1.3/1.5 #bilby.gw.prior.UniformInComponentsMassRatio(name='mass_ratio', minimum=0.125, maximum=1)
 priors_gw['mass_1'] = Constraint(name='mass_1', minimum=0.5, maximum=5)
 priors_gw['mass_2'] = Constraint(name='mass_2', minimum=0.5, maximum=5)
 
@@ -69,6 +72,7 @@ print(priors_gw)
 # to inject the signal into. For the
 # TaylorF2 waveform, we cut the signal close to the isco frequency
 duration = 32
+minimum_frequency=500
 sampling_frequency = 2048
 start_time = injection_parameters["geocent_time"] + 2 - duration
 
@@ -76,7 +80,7 @@ start_time = injection_parameters["geocent_time"] + 2 - duration
 waveform_arguments = dict(
     waveform_approximant="IMRPhenomPv2_NRTidal",
     reference_frequency=50.0,
-    minimum_frequency=40.0,
+    minimum_frequency=minimum_frequency,
 )
 
 # Create the waveform_generator using a LAL Binary Neutron Star source function
@@ -113,23 +117,53 @@ likelihood = bilby.gw.GravitationalWaveTransient(
 # WHY DOES THIS WORK!!!!!!
 priors_gw = dict(priors_gw)
 #exit()
+nsteps = 2000
+burnin = nsteps // 3
 # Run sampler.  In this case we're going to use the `nestle` sampler
 result = bilby.run_sampler(
     likelihood=likelihood,
     priors=priors_gw,
-    #sampler="nestle",
-    #nlive=10,
-    sampler="emcee",
-    nwalkers=10,
-    nsteps=4000,
-    #clean=True,
-    resume=True,
+    sampler="nestle",
+    nlive=10,
     injection_parameters=injection_parameters,
     outdir=outdir,
     label=label,
-    npool=8,
-    #conversion_function=bilby.gw.conversion.generate_all_bns_parameters,
-    #conversion_function=BNSPriorDict_chirpmass_lambda_tilde.default_conversion_function,
+    npool=1,
 )
 
+# Convert the posterior using bilby's standard conversion function
+result.posterior = bilby.gw.conversion.generate_all_bns_parameters(result.posterior)
+#priors = bilby.gw.prior.BNSPriorDict()
+# Overwrite custome priors with uniform to save the bilby object 
+priors_gw['lambda_tilde'] = Uniform(name='lambda_tilde',minimum=0,maximum=1000)
+priors_gw['chirp_mass_source'] = Uniform(name='chirp_mass_source',minimum=1.0,maximum=3.0)
+
 result.plot_corner()
+# Create a new serializable result object
+serializable_result = bilby.core.result.Result(
+    label=label,
+    outdir=outdir,
+    sampler='nestle',
+    search_parameter_keys=['chirp_mass_source', 'mass_ratio', 'lambda_tilde', 'delta_lambda_tilde'],
+    fixed_parameter_keys=[],
+    priors=priors_gw,
+    posterior=result.posterior,
+    log_evidence=result.log_evidence,
+    log_evidence_err=result.log_evidence_err,
+    log_noise_evidence=result.log_noise_evidence,
+    log_bayes_factor=result.log_bayes_factor,
+    log_likelihood_evaluations=result.log_likelihood_evaluations,
+    log_prior_evaluations=result.log_prior_evaluations,
+    sampling_time=result.sampling_time,
+    meta_data=result.meta_data
+)
+
+# Save using standard bilby format
+serializable_result.save_to_file()
+
+# Plot the corner plot
+#serializable_result.plot_corner()
+
+# Test reading the result back
+loaded_result = bilby.core.result.read_in_result(f'{outdir}/{label}_result.json')
+print("Successfully loaded result:", loaded_result)
