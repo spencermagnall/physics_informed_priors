@@ -1,0 +1,6 @@
+bilby
+matplotlib
+numpy
+pandas
+scipy
+wcosmo
