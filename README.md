@@ -13,6 +13,7 @@ We use the following python libaries, all of which are pip installable:
 -  `wcosmo`
 -  `scipy`
 -  `matplotlib`
+-  `pandas`
 
 --------
 Examples
