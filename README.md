@@ -31,8 +31,9 @@ parameter estimation of an injected binary neutron star signal with bilby.
 
 You should also check out the excellent doccumentation and examples for the bilby code [here](https://lscsoft.docs.ligo.org/bilby/examples.html).
 
-Note that for production runs of BNS mergers you probably want to use the mpi parallel implementation of bilby - [parallel bilby](https://lscsoft.docs.ligo.org/parallel_bilby/).  
+Note that for production runs of BNS mergers you probably want to use the mpi parallel implementation of bilby - [parallel bilby](https://lscsoft.docs.ligo.org/parallel_bilby/).
 
+If you have any issues/comments/queries please contact me at [spencer.magnall@monash.edu](mailto:spencer.magnall@monash.edu)
 
 
 Citation guide
