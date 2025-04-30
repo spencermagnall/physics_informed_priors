@@ -236,8 +236,9 @@ def convert_to_lal_binary_neutron_star_parameters_mchirp(parameters):
     from wcosmo.astropy import Planck15  # Import Planck15 cosmology
 
     set_backend("numpy")
-
+    
     converted_parameters = parameters.copy()
+    #print(converted_parameters)
     original_keys = list(converted_parameters.keys())
 
     # Use planck15 cosmology from wcosmo
@@ -322,7 +323,8 @@ def convert_to_lal_binary_neutron_star_parameters_mchirp(parameters):
 
     # Generate tidal parameters
     if 'lambda_tilde' in converted_parameters:
-        if converted_parameters.get('system_type', 'BNS').upper() == 'NSBH':
+        #if converted_parameters.get('system_type', 'BNS').upper() == 'NSBH':
+        if converted_parameters.get('lambda_1') == 0.0:
             #print('NSBH case')
             lambda_1, lambda_2 = lambda_tilde_to_lambda_1_lambda_2_NSBH(
                     converted_parameters['lambda_tilde'],
