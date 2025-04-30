@@ -33,6 +33,7 @@ from bilby.core.prior import (
 from bilby.gw.prior import BNSPriorDict, UniformInComponentsChirpMass
 from bilby.gw.conversion import (
     lambda_tilde_to_lambda_1_lambda_2,
+    lambda_tilde_delta_lambda_tilde_to_lambda_1_lambda_2,
     component_masses_to_symmetric_mass_ratio,
     luminosity_distance_to_redshift,
     generate_mass_parameters
@@ -65,6 +66,8 @@ def lambda_tilde_to_lambda_1_lambda_2_NSBH(lambda_tilde, mass_1, mass_2):
     
     return lambda_1, lambda_2
 
+def lambda_tilde_delta_lambda_tilde_to_lambda_1_lambda_2_NSBH(lambda_tilde,delta_lambda_tilde,mass_1,mass_2):
+    pass 
 
 class BNSPriorDict_chirpmass_lambda_tilde(BNSPriorDict):
     """Prior dictionary for BNS systems parameterized by chirp mass and tidal deformability.
@@ -322,7 +325,7 @@ def convert_to_lal_binary_neutron_star_parameters_mchirp(parameters):
                 2 * np.pi)
 
     # Generate tidal parameters
-    if 'lambda_tilde' in converted_parameters:
+    if 'lambda_tilde' in converted_parameters and 'delta_lambda_tilde' not in converted_parameters:
         #if converted_parameters.get('system_type', 'BNS').upper() == 'NSBH':
         if converted_parameters.get('lambda_1') == 0.0:
             #print('NSBH case')
@@ -341,7 +344,22 @@ def convert_to_lal_binary_neutron_star_parameters_mchirp(parameters):
             
         converted_parameters['lambda_1'] = lambda_1
         converted_parameters['lambda_2'] = lambda_2
-
+    elif 'lambda_tilde' in converted_parameters and 'delta_lambda_tilde' in converted_parameters:
+        if converted_parameters.get('lambda_1') == 0.0:
+            #print('NSBH case')
+            lambda_1, lambda_2 = lambda_tilde_delta_lambda_tilde_to_lambda_1_lambda_2_NSBH(
+                    converted_parameters['lambda_tilde'],
+                    converted_parameters['mass_1'],
+                    converted_parameters['mass_2']
+                )
+        else:  # BNS case
+            #print('BNS case')
+            lambda_1, lambda_2 = lambda_tilde_delta_lambda_tilde_to_lambda_1_lambda_2(
+                    converted_parameters['lambda_tilde'],
+                    converted_parameters['delta_lambda_tilde']
+                    converted_parameters['mass_1'],
+                    converted_parameters['mass_2']
+                )
 
     # Track which keys were added during conversion
     added_keys = [key for key in converted_parameters.keys()
