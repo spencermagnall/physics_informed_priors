@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Magnall"
+  given-names: "Spencer James"
+- family-names: "Ecker"
+  given-names: "Christian"
+- family-names: "Rezzolla"
+  given-names: "Luciano"
+- family-names: "Goode"
+  given-names: "Simon"
+- family-names: "Lasky"
+  given-names: "Paul Daniel"
+title: "physics_informed_priors"
+version: 1.0.0
+doi: 10.5281/zenodo.1234
+date-released: 2025-07-11
+url: "https://github.com/spencermagnall/physics_informed_priors"
