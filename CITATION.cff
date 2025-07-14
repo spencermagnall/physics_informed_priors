@@ -16,3 +16,4 @@ version: 1.0.0
 doi: 10.5281/zenodo.15867428
 date-released: 2025-07-11
 url: "https://github.com/spencermagnall/physics_informed_priors"
+license: MIT
